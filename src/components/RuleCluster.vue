@@ -1,5 +1,10 @@
 <template>
-  <g :transform="transform.cluster">
+  <g
+    :transform="transform.cluster"
+    class="cluster__wrapper"
+    @mouseenter="showTopBarOperation"
+    @mouseleave="hiddenTopBarOperation"
+  >
     <rule-cluster-content
       v-for="(ruleGroup, index) of ruleGroupList"
       :key="index"
@@ -28,10 +33,30 @@
         </el-pagination>
       </div>
     </foreignObject>
+    <foreignObject
+      :height="cluster.topBarHeight"
+      :width="cluster.width"
+      :transform="getTopBarTranslate()"
+    >
+      <div class="foreign-object__root-item cluster__top-bar">
+        <div
+          class="cluster-operating__wrapper"
+          v-show="clusterOperatingVisible"
+        >
+          <i class="el-icon-tickets"></i>
+          <i class="el-icon-document"></i>
+          <i class="el-icon-s-tools"></i>
+          <i class="el-icon-delete"></i>
+        </div>
+        <div class="cluster-index__wrapper" v-show="!clusterOperatingVisible">
+          <i>{{ deviceIndex + 1 }}</i>
+        </div>
+      </div>
+    </foreignObject>
   </g>
 </template>
 
-<script lang="js">
+<script>
 import topologyConfig from '../config/topology';
 import RuleClusterContent from './RuleClusterContent';
 export default {
@@ -43,28 +68,45 @@ export default {
 
   props: {
     node: Object,
+    index: {
+      type: Number,
+      default: 1,
+    },
+    topologyData: {
+      type: Array,
+    },
   },
 
   data() {
     return {
       currentPage: 1,
-      rulePageSize: this.node.isFirstCluster ? 6 : 4,
+      rulePageSize: 8,
       ruleList: [],
+      hiddenTopBarTimeout: undefined,
+      clusterOperatingVisible: false,
     };
   },
 
   computed: {
+    deviceIndex() {
+      return this.topologyData.findIndex((_) => this.node.id === _.id);
+    },
     cluster() {
       return {
         width: this.node.width,
         height: this.node.height,
+        topBarHeight: 36,
       };
     },
     transform() {
       return {
-        cluster: `translate(${this.node?.x - topologyConfig.clusterWidth / 2 + topologyConfig.radius}, ${this.node?.y -
+        cluster: `translate(${
+          this.node?.x - topologyConfig.clusterWidth / 2 + topologyConfig.radius
+        }, ${
+          this.node?.y -
           topologyConfig.clusterHeight / 2 +
-          topologyConfig.radius})`,
+          topologyConfig.radius
+        })`,
       };
     },
 
@@ -83,15 +125,28 @@ export default {
   },
 
   methods: {
+    showTopBarOperation() {
+      this.clusterOperatingVisible = true;
+      window.clearTimeout(this.hiddenTopBarTimeout);
+    },
+
+    hiddenTopBarOperation() {
+      this.hiddenTopBarTimeout = window.setTimeout(() => {
+        this.clusterOperatingVisible = false;
+      }, 1500);
+    },
+
     handlePageChange(pageNo) {
       this.currentPage = pageNo;
     },
 
     getRuleList() {
-      return this.node.line.targetList.map((_) => ({
-        ruleInfo: _,
-        alarm: Math.floor(Math.random() * 30),
-      })).sort((a, b) => b.alarm - a.alarm);
+      return this.node.line.targetList
+        .map((_) => ({
+          ruleInfo: _,
+          alarm: Math.floor(Math.random() * 30),
+        }))
+        .sort((a, b) => b.alarm - a.alarm);
     },
 
     getPaginationTranslate() {
@@ -100,8 +155,18 @@ export default {
       }
       const pageSize = this.ruleGroupList[this.currentPage - 1].length;
       const contentHeight = topologyConfig.clusterHeightMapping[pageSize];
-      const startHeight = (topologyConfig.clusterHeight - contentHeight) / 2
+      const startHeight = (topologyConfig.clusterHeight - contentHeight) / 2;
       return `translate(0, ${startHeight + contentHeight})`;
+    },
+
+    getTopBarTranslate() {
+      if (!this.ruleList.length) {
+        return `translate(-9999, -9999)`;
+      }
+      const pageSize = this.ruleGroupList[this.currentPage - 1].length;
+      const contentHeight = topologyConfig.clusterHeightMapping[pageSize];
+      const startHeight = (topologyConfig.clusterHeight - contentHeight) / 2;
+      return `translate(0, ${startHeight - this.cluster.topBarHeight})`;
     },
 
     updateRuleListAlarm() {
@@ -117,14 +182,45 @@ export default {
     setInterval(() => {
       this.updateRuleListAlarm();
       this.currentPage = 1;
-    }, 1000 * 10);
-  }
+    }, 3600 * 10);
+  },
 };
 </script>
 
 <style lang="scss">
 .rule-cluster__content {
   animation: fade 0.3s;
+}
+.cluster__top-bar {
+  position: relative;
+}
+.cluster-operating__wrapper,
+.cluster-index__wrapper {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: operating-animation 0.3s;
+}
+@keyframes operating-animation {
+  from {
+    opacity: 0;
+    transform: scale(0);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+.cluster-operating__wrapper > [class^='el-icon'] {
+  font-size: 18px;
+  margin: 0 5px;
+}
+.cluster-index__wrapper {
 }
 .rule-cluster__pagination {
   height: 100%;

@@ -9,13 +9,17 @@
 </template>
 
 <script>
-import topologyConfig from "../config/topology";
+import topologyConfig from '../config/topology';
 export default {
   props: {
     node: Object,
+    topologyData: Object,
   },
 
   computed: {
+    deviceIndex() {
+      return this.topologyData.findIndex((_) => this.node.id === _.id);
+    },
     device() {
       return {
         width: topologyConfig.ruleBlockWidth,
@@ -34,5 +38,4 @@ export default {
 };
 </script>
 
-<style>
-</style>
+<style></style>

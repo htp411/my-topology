@@ -22,6 +22,7 @@
         v-for="(node, index) in nodes"
         :key="index"
         :node="node"
+        :topology-data="topologyData"
       ></component>
     </g>
   </svg>
@@ -60,13 +61,14 @@ export default {
       svgHeight: 200,
       nodes: [],
       lines: [],
-      groupScale: 0.9,
+      groupScale: 0.8,
       groupTranslateX: 0,
       groupTranslateY: 0,
       svgScale: 1,
       svgTranslateX: 0,
       svgTranslateY: 0,
       topologyVisible: false,
+      topologyData: null,
     };
   },
 
@@ -126,6 +128,7 @@ export default {
     getNodeAndLines() {
       console.log(DataParseUtil);
       const data = DataParseUtil.topology(topologyData);
+      this.topologyData = data;
       const { nodes, edges, dagre } = TopologyLayout.getNodesAndEdgess(data);
       this.nodes = nodes;
       this.lines = edges;

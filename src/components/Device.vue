@@ -1,10 +1,7 @@
 <template>
   <g :transform="transform.device">
-    <circle
-      :r="device.radius"
-      :height="device.height"
-      fill="rgba(0,0,0,.3)"
-    ></circle>
+    <circle :r="device.radius" :height="device.height" fill="#096148"></circle>
+    <text transform="translate(-20, 5)" fill="#fff">单节点</text>
   </g>
 </template>
 

@@ -3,7 +3,7 @@
     <path
       ref="lineRef"
       fill="none"
-      stroke="rgba(0,0,0,.5)"
+      stroke="rgba(127, 127, 127,1)"
       :id="getLineId(index)"
     >
     </path>

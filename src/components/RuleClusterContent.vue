@@ -33,14 +33,14 @@
         ry="5"
         fill="none"
         stroke-width="2"
-        style="stroke-dasharray: 20"
+        style="stroke-dasharray: 10"
         stroke="rgb(118, 168, 224)"
       ></rect>
       <circle
         v-for="(rule, index) of rules"
         :key="index"
         :r="content.ruleRadius"
-        fill="red"
+        fill="#227D51"
         :transform="`translate(${rule.x},${rule.y})`"
       ></circle>
       <circle
@@ -66,29 +66,46 @@
         :transform="`translate(${ruleKpi.x}, ${ruleKpi.y})`"
       >
         <div class="foreign-object__root-item kpi-wrapper">
-          <span v-for="kpi in ruleKpi.kpiInfo" :key="kpi.key" class="kpi">{{
-            kpi.key ? `${kpi.key}: ${kpi.value}` : '请绑定KPI'
-          }}</span>
+          <span
+            v-for="kpi in ruleKpi.kpiInfo"
+            :key="kpi.key"
+            :class="['kpi', { 'kpi-hidden': !kpi.key }]"
+            >{{ kpi.key ? `${kpi.key}: ${kpi.value}` : '请绑定KPI' }}</span
+          >
         </div>
       </foreignObject>
 
+      <template v-if="httpCodeBlockVisible">
+        <foreignObject
+          :height="content.httpCodeBlockHeight"
+          :width="content.httpCodeBlockWidth"
+          v-for="(httpCode, index) in httpCOdeData"
+          :key="'http-code' + index"
+          :transform="`translate(${httpCode.x},${httpCode.y})`"
+        >
+          <div class="foreign-object__root-item">
+            <ul class="http-code__list">
+              <li
+                v-for="(code, index) in httpCode.httpCodeInfo"
+                :key="'http-code-key' + index"
+                class="http-code__item"
+              >
+                <span>{{ code.key }}数量: {{ code.value.baseline }}</span>
+                <span>上周同期: {{ code.value.lastWeek }}</span>
+              </li>
+            </ul>
+          </div>
+        </foreignObject>
+      </template>
+
       <foreignObject
-        :height="content.httpCodeBlockHeight"
-        :width="content.httpCodeBlockWidth"
-        v-for="(httpCode, index) in httpCOdeData"
-        :key="'http-code' + index"
-        :transform="`translate(${httpCode.x},${httpCode.y})`"
+        :height="content.ruleNameBlockHeight"
+        :width="content.ruleNameBlockWidth"
+        v-for="(rule, index) of ruleNameList"
+        :key="'rule-name-' + index"
+        :transform="`translate(${rule.x}, ${rule.y})`"
       >
-        <ul class="foreign-object__root-item http-code__list">
-          <li
-            v-for="(code, index) in httpCode.httpCodeInfo"
-            :key="'http-code-key' + index"
-            class="http-code__item"
-          >
-            <span>{{ code.key }}数量: {{ code.value.baseline }}</span>
-            <span>上周同期: {{ code.value.lastWeek }}</span>
-          </li>
-        </ul>
+        <span class="foreign-object__root-item rule-name">{{ rule.name }}</span>
       </foreignObject>
     </g>
   </svg>
@@ -120,21 +137,44 @@ export default {
   },
 
   data() {
+    let httpCodeBlockVisible;
+
+    const localeStr = window.localStorage.getItem('httpCodeBlockVisible');
+
+    if (localeStr != null) {
+      httpCodeBlockVisible = JSON.parse(localeStr).visible;
+    }
     return {
       contentId: Generator.randomString(),
+      httpCodeBlockVisible,
     };
   },
 
   computed: {
     content() {
       return {
+        padding: 10,
         ruleRadius: topologyConfig.ruleRadius,
         width: topologyConfig.clusterWidth,
         height: topologyConfig.clusterHeightMapping[this.ruleGroup.length],
         kpiTextBlockWidth: 200,
         kpiTextBlockHeight: 150,
+        kpiTextBlockX: 88,
+        clusterKpiTextBlockX: 288,
         httpCodeBlockHeight: 72,
         httpCodeBlockWidth: 220,
+        ruleNameBlockWidth: 200,
+        ruleNameBlockHeight: 36,
+      };
+    },
+    ruleAxis() {
+      return {
+        x:
+          this.content.kpiTextBlockX +
+          this.content.kpiTextBlockWidth +
+          this.content.ruleRadius * 3 +
+          10,
+        clusterX: 150,
       };
     },
     transform() {
@@ -155,7 +195,7 @@ export default {
       return this.ruleGroup.map((rule, i) => ({
         ruleInfo: rule.ruleInfo,
         alarm: rule.alarm,
-        x: this.isFirstCluster ? 2 * ruleRadius + 100 : 260 + 2 * ruleRadius,
+        x: this.isFirstCluster ? this.ruleAxis.clusterX : this.ruleAxis.x,
         y: blackSpaceHeight * (i + 1) + i * ruleRadius * 2 + ruleRadius,
       }));
     },
@@ -181,15 +221,17 @@ export default {
           id: Math.random(),
           points: [
             { x: 8, y: this.gatherPoints[0].y },
-            { x: 20, y: this.gatherPoints[0].y },
+            { x: 15, y: this.gatherPoints[0].y },
             { x: this.isFirstCluster ? 160 : 88, y: d.y },
             {
               x: this.isFirstCluster
-                ? d.x + 260
-                : d.x + this.content.ruleRadius + 150,
+                ? d.x +
+                  this.content.kpiTextBlockWidth +
+                  this.content.ruleRadius * 3.6
+                : d.x + this.content.ruleRadius + this.content.ruleRadius * 1.6,
               y: d.y,
             },
-            { x: this.content.width - 20, y: this.gatherPoints[0].y },
+            { x: this.content.width - 8, y: this.gatherPoints[0].y },
             { x: this.content.width, y: this.gatherPoints[0].y },
           ],
         };
@@ -224,13 +266,12 @@ export default {
     kpiData() {
       const kpiList = [...this.kpiList];
       if (kpiList.length % 2 !== 0) {
-        kpiList.push('');
+        kpiList.unshift('');
       }
       return this.rules.map((rule) => ({
         x: this.isFirstCluster
-          ? rule.x + this.content.ruleRadius + 30
-          : rule.x -
-            (this.content.kpiTextBlockWidth + this.content.ruleRadius + 10),
+          ? this.content.clusterKpiTextBlockX
+          : this.content.kpiTextBlockX,
         y: rule.y - this.content.kpiTextBlockHeight / 2,
         kpiInfo: kpiList.map((_) => ({
           key: _,
@@ -240,9 +281,7 @@ export default {
     },
     httpCOdeData() {
       return this.rules.map((rule) => ({
-        x: this.isFirstCluster
-          ? rule.x - this.content.kpiTextBlockWidth + this.content.ruleRadius
-          : rule.x - (this.content.ruleRadius - 10),
+        x: rule.x - this.content.httpCodeBlockWidth / 2,
         y: rule.y - this.content.kpiTextBlockHeight / 1.32,
         httpCodeInfo: ['4XX', '5XX'].map((_) => ({
           key: _,
@@ -251,6 +290,15 @@ export default {
             lastWeek: Math.floor(Math.random() * 20),
           },
         })),
+      }));
+    },
+    ruleNameList() {
+      return this.rules.map((d) => ({
+        x: d.x - this.content.ruleNameBlockWidth / 2,
+        y: d.y + this.content.ruleRadius + this.content.padding / 3,
+        name: d.ruleInfo.ruleInfo
+          ? d.ruleInfo.ruleInfo.ruleName
+          : d.ruleInfo.netLabelName,
       }));
     },
   },
@@ -284,7 +332,6 @@ export default {
       });
     },
   },
-
   mounted() {
     this.drawLine();
   },
@@ -298,7 +345,7 @@ ul {
 .foreign-object__root-item {
   height: 100%;
   width: 100%;
-  color: #666;
+  color: #a0a0a0;
   &.kpi-wrapper {
     display: flex;
     flex-direction: column;
@@ -308,27 +355,36 @@ ul {
       border: 1px solid lightgray;
       border-radius: 3px;
       margin: 3px 0;
+      &.kpi-hidden {
+        opacity: 0;
+      }
     }
   }
-  &.http-code__list {
+  .http-code__list {
     display: flex;
     flex-direction: column;
+    border: 1px solid #a0a0a0;
+    border-radius: 3px;
     .http-code__item {
       display: flex;
-      border: 1px solid lightgray;
-      border-radius: 3px 3px 0 0;
-      &:last-child {
-        border-radius: 0 0 3px 3px;
-        border-top: none;
+      &:nth-child(odd) {
+        border-bottom: 1px dashed #a0a0a0;
       }
       span {
         width: 50%;
         padding: 5px;
         &:last-child {
-          border-left: 1px solid lightgray;
+          border-left: 1px dashed darkgray;
         }
       }
     }
   }
+}
+.rule-name {
+  text-align: center;
+  display: inline-block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 </style>

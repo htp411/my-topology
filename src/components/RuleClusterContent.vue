@@ -134,6 +134,10 @@ export default {
       type: Boolean,
       default: false,
     },
+    rulePageSize: {
+      type: Number,
+      required: true,
+    },
   },
 
   data() {
@@ -156,7 +160,7 @@ export default {
         padding: 10,
         ruleRadius: topologyConfig.ruleRadius,
         width: topologyConfig.clusterWidth,
-        height: topologyConfig.clusterHeightMapping[this.ruleGroup.length],
+        height: topologyConfig.getClusterHeight(this.ruleGroup.length),
         kpiTextBlockWidth: 200,
         kpiTextBlockHeight: 150,
         kpiTextBlockX: 88,
@@ -180,7 +184,10 @@ export default {
     transform() {
       return {
         group: `translate(${2},${
-          2 + (topologyConfig.clusterHeight - this.content.height) / 2
+          2 +
+          (topologyConfig.getClusterHeight(this.rulePageSize) -
+            this.content.height) /
+            2
         })`,
       };
     },

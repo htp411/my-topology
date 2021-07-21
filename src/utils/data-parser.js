@@ -1,4 +1,5 @@
 import Vue from 'vue';
+import * as d3 from 'd3';
 import topologyConfig from '../config/topology';
 
 export class DataParseUtil {
@@ -22,6 +23,15 @@ export class DataParseUtil {
       device = device.slice(0, line.length + 1);
     }
 
+    const ruleListLengthArray = line.map((l) => (l.targetList || []).length);
+    const maxRuleSize = d3.max(ruleListLengthArray);
+
+    let pageSize = topologyConfig.pageModel.pageSize;
+
+    if (topologyConfig.pageModel.model === 'showAll') {
+      pageSize = maxRuleSize;
+    }
+
     device.forEach((d, index) => {
       const existsClusterOnFirstLine = !!(
         line[0].targetList && line[0].targetList.length
@@ -42,7 +52,7 @@ export class DataParseUtil {
           ? topologyConfig.clusterWidth
           : topologyConfig.blockWidth,
         height: isCluster
-          ? topologyConfig.clusterHeight
+          ? topologyConfig.getClusterHeight(pageSize)
           : topologyConfig.blockHeight,
         next: device[index + 1] ? [device[index + 1].id] : [],
         rules: line[index - 1] ? line[index - 1].targetList || [] : [],
@@ -53,7 +63,7 @@ export class DataParseUtil {
       });
     });
 
-    return resultData;
+    return { resultData, maxRuleSize };
 
     // const rules = line[0].targetList || [];
 

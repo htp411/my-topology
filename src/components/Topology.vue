@@ -23,6 +23,7 @@
         :key="index"
         :node="node"
         :topology-data="topologyData"
+        :max-rule-size="maxRuleSize"
       ></component>
     </g>
   </svg>
@@ -69,6 +70,7 @@ export default {
       svgTranslateY: 0,
       topologyVisible: false,
       topologyData: null,
+      maxRuleSize: 0,
     };
   },
 
@@ -127,7 +129,10 @@ export default {
 
     getNodeAndLines() {
       console.log(DataParseUtil);
-      const data = DataParseUtil.topology(topologyData);
+      const { resultData: data, maxRuleSize } = DataParseUtil.topology(
+        topologyData
+      );
+      this.maxRuleSize = maxRuleSize;
       this.topologyData = data;
       const { nodes, edges, dagre } = TopologyLayout.getNodesAndEdgess(data);
       this.nodes = nodes;

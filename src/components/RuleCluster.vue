@@ -11,6 +11,7 @@
       :rule-group="ruleGroup"
       :line="node.line"
       :is-first-cluster="node.isFirstCluster"
+      :rule-page-size="rulePageSize"
       v-show="index + 1 === currentPage"
       class="rule-cluster__content"
     >
@@ -22,6 +23,7 @@
     >
       <div class="rule-cluster__pagination">
         <el-pagination
+          v-if="!hiddenRest"
           hide-on-single-page
           layout="total, prev, pager, next, slot"
           :small="false"
@@ -31,6 +33,13 @@
           @current-change="handlePageChange"
         >
         </el-pagination>
+        <div v-if="hiddenRest && ruleList.length > rulePageSize">
+          当前集群共有{{ ruleList.length }}个规则，剩余的{{
+            ruleList.length - rulePageSize
+          }}个已隐藏，如需显示请切换到<strong>显示全部</strong>或<strong
+            >分页模式</strong
+          >
+        </div>
       </div>
     </foreignObject>
     <foreignObject
@@ -75,12 +84,19 @@ export default {
     topologyData: {
       type: Array,
     },
+    maxRuleSize: {
+      type: Number,
+      required: true,
+    },
   },
 
   data() {
     return {
       currentPage: 1,
-      rulePageSize: 8,
+      rulePageSize:
+        topologyConfig.pageModel.model === 'showAll'
+          ? this.maxRuleSize
+          : topologyConfig.pageModel.pageSize,
       ruleList: [],
       hiddenTopBarTimeout: undefined,
       clusterOperatingVisible: false,
@@ -90,6 +106,9 @@ export default {
   computed: {
     deviceIndex() {
       return this.topologyData.findIndex((_) => this.node.id === _.id);
+    },
+    hiddenRest() {
+      return topologyConfig.pageModel.model === 'hiddenRest';
     },
     cluster() {
       return {
@@ -104,7 +123,7 @@ export default {
           this.node?.x - topologyConfig.clusterWidth / 2 + topologyConfig.radius
         }, ${
           this.node?.y -
-          topologyConfig.clusterHeight / 2 +
+          topologyConfig.getClusterHeight(this.rulePageSize) / 2 +
           topologyConfig.radius
         })`,
       };
@@ -120,6 +139,9 @@ export default {
         ruleGroupList.push(this.ruleList.slice(i, i + maxRuleCount));
       }
 
+      if (this.hiddenRest) {
+        return ruleGroupList.slice(0, 1);
+      }
       return ruleGroupList;
     },
   },
@@ -154,8 +176,10 @@ export default {
         return `translate(-9999, -9999)`;
       }
       const pageSize = this.ruleGroupList[this.currentPage - 1].length;
-      const contentHeight = topologyConfig.clusterHeightMapping[pageSize];
-      const startHeight = (topologyConfig.clusterHeight - contentHeight) / 2;
+      const contentHeight = topologyConfig.getClusterHeight(pageSize);
+      const startHeight =
+        (topologyConfig.getClusterHeight(this.rulePageSize) - contentHeight) /
+        2;
       return `translate(0, ${startHeight + contentHeight})`;
     },
 
@@ -164,8 +188,10 @@ export default {
         return `translate(-9999, -9999)`;
       }
       const pageSize = this.ruleGroupList[this.currentPage - 1].length;
-      const contentHeight = topologyConfig.clusterHeightMapping[pageSize];
-      const startHeight = (topologyConfig.clusterHeight - contentHeight) / 2;
+      const contentHeight = topologyConfig.getClusterHeight(pageSize);
+      const startHeight =
+        (topologyConfig.getClusterHeight(this.rulePageSize) - contentHeight) /
+        2;
       return `translate(0, ${startHeight - this.cluster.topBarHeight})`;
     },
 
@@ -227,6 +253,10 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
+  color: #a0a0a0;
+  strong {
+    color: #dfdfdf;
+  }
 }
 @keyframes fade {
   0% {

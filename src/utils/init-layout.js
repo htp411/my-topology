@@ -72,4 +72,19 @@ export class TopologyLayout {
     // console.log({ nodes, edges, dagre });
     return { nodes, edges, dagre };
   }
+
+  static getShareLinesInfo(ruleSize) {
+    const maxSingleLineCount = 12;
+    const needToShareLine = ruleSize > maxSingleLineCount;
+    let lineCount = ruleSize;
+
+    if (needToShareLine) {
+      lineCount = Math.floor(ruleSize / 2) + (lineCount % 2);
+    }
+
+    return {
+      needToShareLine,
+      lineCount,
+    };
+  }
 }

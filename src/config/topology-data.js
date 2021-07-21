@@ -172,7 +172,7 @@ export default {
         'valleyTransRespTime',
         'bytesRate',
       ],
-      targetList: Array(12).fill({
+      targetList: Array(10).fill({
         id: 1948,
         lineId: 124,
         instanceId: 17,

@@ -27,6 +27,7 @@ export default {
   minTopologyLength: 2,
   clusterWidth: 580,
   ellipseClusterWidth: 720,
+  shareLineEllipseClusterWidth: 1020,
   clusterHeight: 1800,
 
   getClusterHeight(ruleCount) {
@@ -36,7 +37,7 @@ export default {
       3: 680,
       4: 888,
       6: 1280,
-      8: 1520,
+      8: 1620,
     };
 
     return defaultMapping[ruleCount] || 236 * ruleCount;

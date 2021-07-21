@@ -1,6 +1,7 @@
 import Vue from 'vue';
 import * as d3 from 'd3';
 import topologyConfig from '../config/topology';
+import { TopologyLayout } from './init-layout';
 
 export class DataParseUtil {
   /**
@@ -29,6 +30,9 @@ export class DataParseUtil {
     const ruleListLengthArray = line.map((l) => (l.targetList || []).length);
     const firstClusterRuleSize = ruleListLengthArray[0];
     const maxRuleSize = d3.max(ruleListLengthArray);
+    const { needToShareLine, lineCount } = TopologyLayout.getShareLinesInfo(
+      firstClusterRuleSize
+    );
 
     let pageSize = topologyConfig.pageModel.pageSize;
 
@@ -36,46 +40,51 @@ export class DataParseUtil {
       pageSize = maxRuleSize;
     }
 
-    if (top)
-      device.forEach((d, index) => {
-        const existsClusterOnFirstLine = !!(
-          line[0].targetList && line[0].targetList.length
-        );
+    device.forEach((d, index) => {
+      const existsClusterOnFirstLine = !!(
+        line[0].targetList && line[0].targetList.length
+      );
 
-        if (index === 0 && existsClusterOnFirstLine) {
-          return;
-        }
+      if (index === 0 && existsClusterOnFirstLine) {
+        return;
+      }
 
-        const l = line[index - 1] ? line[index - 1] : {};
-        const isCluster = (l.targetList || []).length > 1;
-        const isEllipseCluster = index === 1 && isExpandFirstCluster;
+      const l = line[index - 1] ? line[index - 1] : {};
+      const isCluster = (l.targetList || []).length > 1;
+      const isEllipseCluster = index === 1 && isExpandFirstCluster;
 
-        resultData.push({
-          id: d.id,
-          type: isCluster
-            ? isEllipseCluster
-              ? 'ellipseCluster'
-              : 'ruleCluster'
-            : 'device',
-          label: d.name || '未命名设备',
-          width: isCluster
-            ? isEllipseCluster
-              ? topologyConfig.ellipseClusterWidth
-              : topologyConfig.clusterWidth
-            : topologyConfig.blockWidth,
-          height: isCluster
-            ? topologyConfig.getClusterHeight(
-                isEllipseCluster ? firstClusterRuleSize : pageSize
-              )
-            : topologyConfig.blockHeight,
-          next: device[index + 1] ? [device[index + 1].id] : [],
-          rules: line[index - 1] ? line[index - 1].targetList || [] : [],
-          device: d,
-          line: l,
-          isFirstCluster: index === 1 && existsClusterOnFirstLine,
-          modelFlag: topologyData.model_flag,
-        });
+      resultData.push({
+        id: d.id,
+        type: isCluster
+          ? isEllipseCluster
+            ? 'ellipseCluster'
+            : 'ruleCluster'
+          : 'device',
+        label: d.name || '未命名设备',
+        width: isCluster
+          ? isEllipseCluster
+            ? needToShareLine
+              ? topologyConfig.shareLineEllipseClusterWidth
+              : topologyConfig.ellipseClusterWidth
+            : topologyConfig.clusterWidth
+          : topologyConfig.blockWidth,
+        height: isCluster
+          ? topologyConfig.getClusterHeight(
+              isEllipseCluster
+                ? needToShareLine
+                  ? lineCount
+                  : firstClusterRuleSize
+                : pageSize
+            )
+          : topologyConfig.blockHeight,
+        next: device[index + 1] ? [device[index + 1].id] : [],
+        rules: line[index - 1] ? line[index - 1].targetList || [] : [],
+        device: d,
+        line: l,
+        isFirstCluster: index === 1 && existsClusterOnFirstLine,
+        modelFlag: topologyData.model_flag,
       });
+    });
 
     return { resultData, maxRuleSize };
 

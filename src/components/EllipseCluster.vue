@@ -130,6 +130,7 @@ import * as d3 from 'd3';
 
 import topologyConfig from '../config/topology';
 import Generator from '../utils/genarator';
+import { TopologyLayout } from '../utils/init-layout';
 
 export default {
   name: 'EllipseCluster',
@@ -185,6 +186,7 @@ export default {
         httpCodeBlockWidth: 220,
         ruleNameBlockWidth: 200,
         ruleNameBlockHeight: 36,
+        ruleBlockWidth: 480,
       };
     },
 
@@ -195,40 +197,64 @@ export default {
       };
     },
 
+    shareLinesInfo() {
+      return TopologyLayout.getShareLinesInfo(this.node.line.targetList.length);
+    },
+
     transform() {
+      const { needToShareLine, lineCount } = TopologyLayout.getShareLinesInfo(
+        this.node.line.targetList.length
+      );
+      const ty = needToShareLine
+        ? topologyConfig.getClusterHeight(lineCount) / 2 - topologyConfig.radius
+        : topologyConfig.getClusterHeight(this.rulePageSize) / 2 -
+          topologyConfig.radius;
+
+      const tx = needToShareLine
+        ? topologyConfig.shareLineEllipseClusterWidth / 2 -
+          topologyConfig.radius
+        : topologyConfig.ellipseClusterWidth / 2 - topologyConfig.radius;
       return {
-        cluster: `translate(${
-          this.node?.x -
-          topologyConfig.ellipseClusterWidth / 2 +
-          topologyConfig.radius
-        }, ${
-          this.node?.y -
-          topologyConfig.getClusterHeight(this.rulePageSize) / 2 +
-          topologyConfig.radius
-        })`,
+        cluster: `translate(${this.node.x - tx}, ${this.node.y - ty})`,
       };
     },
 
     rules() {
+      const { lineCount, needToShareLine } = TopologyLayout.getShareLinesInfo(
+        this.node.line.targetList.length
+      );
+
       const ruleRadius = topologyConfig.ruleRadius;
-      const ruleCount = this.node.line.targetList.length;
-      const blackSpaceCount = ruleCount + 1;
+
+      const blackSpaceCount = lineCount + 1;
       const blackSpaceHeight =
-        (this.cluster.height - ruleCount * ruleRadius * 2) / blackSpaceCount;
+        (this.cluster.height - lineCount * ruleRadius * 2) / blackSpaceCount;
 
       return this.node.line.targetList.map((rule, i) => ({
         id: rule.id,
         ruleInfo: rule.ruleInfo,
         alarm: Math.floor(Math.random() * 100),
-        x: this.ruleAxis.clusterX,
-        y: blackSpaceHeight * (i + 1) + i * ruleRadius * 2 + ruleRadius,
+        x: needToShareLine
+          ? i + 1 <= lineCount
+            ? this.ruleAxis.clusterX
+            : this.ruleAxis.clusterX + this.cluster.ruleBlockWidth
+          : this.ruleAxis.clusterX,
+        y: needToShareLine
+          ? i + 1 <= lineCount
+            ? blackSpaceHeight * (i + 1) + i * ruleRadius * 2 + ruleRadius
+            : blackSpaceHeight * (i + 1 - lineCount) +
+              (i - lineCount) * ruleRadius * 2 +
+              ruleRadius
+          : blackSpaceHeight * (i + 1) + i * ruleRadius * 2 + ruleRadius,
       }));
     },
 
     gatherPoints() {
       return [
         {
-          x: topologyConfig.ellipseClusterWidth,
+          x: this.shareLinesInfo.needToShareLine
+            ? topologyConfig.shareLineEllipseClusterWidth
+            : topologyConfig.ellipseClusterWidth,
           y: this.cluster.height / 2,
         },
       ];
@@ -236,6 +262,9 @@ export default {
 
     linkLines() {
       const isSingleRule = this.rules.length === 1;
+      const { lineCount, needToShareLine } = TopologyLayout.getShareLinesInfo(
+        this.node.line.targetList.length
+      );
 
       const linkLines = this.rules.map((d) => {
         console.log(this.httpCodeBlockVisible);
@@ -244,11 +273,15 @@ export default {
           points: [
             { x: this.ruleAxis.clusterX + this.cluster.ruleRadius / 2, y: d.y },
             {
-              x:
-                d.x +
-                (this.httpCodeBlockVisible
-                  ? this.cluster.clusterKpiTextBlockX + 68
-                  : this.cluster.clusterKpiTextBlockX + 50),
+              x: this.shareLinesInfo.needToShareLine
+                ? d.x +
+                  this.cluster.clusterKpiTextBlockX +
+                  this.cluster.ruleBlockWidth +
+                  60
+                : d.x +
+                  (this.httpCodeBlockVisible
+                    ? this.cluster.clusterKpiTextBlockX + 68
+                    : this.cluster.clusterKpiTextBlockX + 50),
               y: d.y,
             },
             { x: this.cluster.width - 8, y: this.gatherPoints[0].y },
@@ -263,6 +296,10 @@ export default {
         });
       }
 
+      if (needToShareLine) {
+        return linkLines.slice(0, lineCount);
+      }
+
       return linkLines;
     },
 
@@ -275,9 +312,11 @@ export default {
       if (kpiList.length % 2 !== 0) {
         kpiList.unshift('');
       }
-      return this.rules.map((rule) => ({
-        x: this.isFirstCluster
-          ? this.cluster.clusterKpiTextBlockX
+      return this.rules.map((rule, i) => ({
+        x: this.shareLinesInfo.needToShareLine
+          ? i + 1 > this.shareLinesInfo.lineCount
+            ? this.cluster.kpiTextBlockX + this.cluster.ruleBlockWidth
+            : this.cluster.kpiTextBlockX
           : this.cluster.kpiTextBlockX,
         y: rule.y - this.cluster.kpiTextBlockHeight / 2,
         kpiInfo: kpiList.map((_) => ({

@@ -30,17 +30,20 @@
 </template>
 
 <script>
+import { zoom, select } from 'd3';
+
 import { TopologyLayout } from '../utils/init-layout';
 import topologyData from '../config/topology-data';
 import { DataParseUtil } from '../utils/data-parser';
+import Generator from '../utils/genarator';
+import topologyConfig from '../config/topology';
+
 import Device from './Device.vue';
 import Line from './Lines.vue';
 import Rule from './Rule.vue';
 import Defs from './Defs.vue';
 import RuleCluster from './RuleCluster.vue';
-import { zoom, select } from 'd3';
-import Generator from '../utils/genarator';
-import topologyConfig from '../config/topology';
+import EllipseCluster from './EllipseCluster';
 export default {
   name: 'Topology',
 
@@ -48,6 +51,7 @@ export default {
     Device,
     Rule,
     RuleCluster,
+    EllipseCluster,
     DefList: Defs,
     TopologyLine: Line,
   },
@@ -123,6 +127,7 @@ export default {
         device: 'device',
         rule: 'rule',
         ruleCluster: 'rule-cluster',
+        ellipseCluster: 'ellipse-cluster',
       };
       return componentsMapping[type];
     },

@@ -9,6 +9,7 @@
         :id="getLineId(index)"
         class="animation-line"
       ></path>
+
       <circle
         v-for="(line, index) of linkLines"
         :key="'animation' + index"
@@ -26,6 +27,7 @@
           <mpath :xlink:href="'#' + getLineId(index)"></mpath>
         </animateMotion>
       </circle>
+
       <rect
         :width="content.width"
         :height="content.height"
@@ -36,6 +38,7 @@
         style="stroke-dasharray: 10"
         stroke="rgb(118, 168, 224)"
       ></rect>
+
       <circle
         v-for="(rule, index) of rules"
         :key="index"
@@ -43,6 +46,7 @@
         fill="#227D51"
         :transform="`translate(${rule.x},${rule.y})`"
       ></circle>
+
       <circle
         v-for="(p, i) in gatherPoints"
         :key="'gather-point-' + i"
@@ -135,7 +139,7 @@ export default {
       default: false,
     },
     rulePageSize: {
-      type: Number,
+      type: [Number, String],
       required: true,
     },
   },

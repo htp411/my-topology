@@ -23,45 +23,59 @@ export class DataParseUtil {
       device = device.slice(0, line.length + 1);
     }
 
+    const topologyModel = topologyConfig.pageModel.model;
+    const isExpandFirstCluster = topologyConfig.pageModel.expandFirstCluster;
+    const isShowAll = topologyModel === 'showAll';
     const ruleListLengthArray = line.map((l) => (l.targetList || []).length);
+    const firstClusterRuleSize = ruleListLengthArray[0];
     const maxRuleSize = d3.max(ruleListLengthArray);
 
     let pageSize = topologyConfig.pageModel.pageSize;
 
-    if (topologyConfig.pageModel.model === 'showAll') {
+    if (isShowAll) {
       pageSize = maxRuleSize;
     }
 
-    device.forEach((d, index) => {
-      const existsClusterOnFirstLine = !!(
-        line[0].targetList && line[0].targetList.length
-      );
+    if (top)
+      device.forEach((d, index) => {
+        const existsClusterOnFirstLine = !!(
+          line[0].targetList && line[0].targetList.length
+        );
 
-      if (index === 0 && existsClusterOnFirstLine) {
-        return;
-      }
+        if (index === 0 && existsClusterOnFirstLine) {
+          return;
+        }
 
-      const l = line[index - 1] ? line[index - 1] : {};
-      const isCluster = (l.targetList || []).length > 1;
+        const l = line[index - 1] ? line[index - 1] : {};
+        const isCluster = (l.targetList || []).length > 1;
+        const isEllipseCluster = index === 1 && isExpandFirstCluster;
 
-      resultData.push({
-        id: d.id,
-        type: isCluster ? 'ruleCluster' : 'device',
-        label: d.name || '未命名设备',
-        width: isCluster
-          ? topologyConfig.clusterWidth
-          : topologyConfig.blockWidth,
-        height: isCluster
-          ? topologyConfig.getClusterHeight(pageSize)
-          : topologyConfig.blockHeight,
-        next: device[index + 1] ? [device[index + 1].id] : [],
-        rules: line[index - 1] ? line[index - 1].targetList || [] : [],
-        device: d,
-        line: l,
-        isFirstCluster: index === 1 && existsClusterOnFirstLine,
-        modelFlag: topologyData.model_flag,
+        resultData.push({
+          id: d.id,
+          type: isCluster
+            ? isEllipseCluster
+              ? 'ellipseCluster'
+              : 'ruleCluster'
+            : 'device',
+          label: d.name || '未命名设备',
+          width: isCluster
+            ? isEllipseCluster
+              ? topologyConfig.ellipseClusterWidth
+              : topologyConfig.clusterWidth
+            : topologyConfig.blockWidth,
+          height: isCluster
+            ? topologyConfig.getClusterHeight(
+                isEllipseCluster ? firstClusterRuleSize : pageSize
+              )
+            : topologyConfig.blockHeight,
+          next: device[index + 1] ? [device[index + 1].id] : [],
+          rules: line[index - 1] ? line[index - 1].targetList || [] : [],
+          device: d,
+          line: l,
+          isFirstCluster: index === 1 && existsClusterOnFirstLine,
+          modelFlag: topologyData.model_flag,
+        });
       });
-    });
 
     return { resultData, maxRuleSize };
 

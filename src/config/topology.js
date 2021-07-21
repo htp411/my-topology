@@ -2,6 +2,7 @@ const topologyModelStr = window.localStorage.getItem('topologyModel');
 const defaultTopologyModel = {
   model: 'pagination',
   pageSize: 4,
+  expandFirstCluster: false,
 };
 
 export default {
@@ -25,7 +26,9 @@ export default {
   maxTopologyLength: 9,
   minTopologyLength: 2,
   clusterWidth: 580,
+  ellipseClusterWidth: 720,
   clusterHeight: 1800,
+
   getClusterHeight(ruleCount) {
     const defaultMapping = {
       1: 288,
@@ -36,6 +39,6 @@ export default {
       8: 1520,
     };
 
-    return defaultMapping[ruleCount] || 220 * ruleCount;
+    return defaultMapping[ruleCount] || 236 * ruleCount;
   },
 };

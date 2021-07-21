@@ -9,13 +9,20 @@
         <span>设置</span>
       </div>
     </div>
-    <el-dialog title="修改拓扑配置" :visible.sync="dialogVisible" width="500px">
+    <el-dialog title="修改拓扑配置" :visible.sync="dialogVisible" width="680px">
       <el-form ref="form" :model="form" label-suffix=":" label-width="100px">
         <el-form-item label="HTTP错误码">
           <el-switch
             v-model="form.httpCodeBlockVisible"
             active-text="显示"
             inactive-text="隐藏"
+          ></el-switch>
+        </el-form-item>
+        <el-form-item label="首个节点集群">
+          <el-switch
+            v-model="form.expandFirstCluster"
+            active-text="全部展开"
+            inactive-text="跟随模式"
           ></el-switch>
         </el-form-item>
         <el-form-item prop="model" label="集群显示模式">
@@ -91,10 +98,15 @@ export default {
     updateTopologyModel() {
       const { pageSize } = this.form;
 
-      if (+pageSize === 0 || pageSize.toString().includes('.')) {
+      if (
+        Number.isNaN(+pageSize) ||
+        +pageSize === 0 ||
+        pageSize.toString().includes('.')
+      ) {
         this.$message.error('pageSize 必须为大于零的正整数');
       }
 
+      this.form.pageSize = parseInt(this.form.pageSize.toString());
       window.localStorage.setItem('topologyModel', JSON.stringify(this.form));
       this.updatedHttpCodeBlockVisibleStatus();
 

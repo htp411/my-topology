@@ -27,7 +27,7 @@
           hide-on-single-page
           layout="total, prev, pager, next, slot"
           :small="false"
-          :page-size="rulePageSize"
+          :page-size="+rulePageSize"
           :total="ruleList.length"
           :current-page.sync="currentPage"
           @current-change="handlePageChange"
@@ -85,7 +85,7 @@ export default {
       type: Array,
     },
     maxRuleSize: {
-      type: Number,
+      type: [Number, String],
       required: true,
     },
   },
@@ -132,7 +132,7 @@ export default {
     ruleGroupList() {
       if (!this.ruleList.length) return [];
 
-      const maxRuleCount = this.rulePageSize;
+      const maxRuleCount = +this.rulePageSize;
       const ruleGroupList = [];
 
       for (let i = 0; i < this.ruleList.length; i += maxRuleCount) {
@@ -175,7 +175,12 @@ export default {
       if (!this.ruleList.length) {
         return `translate(-9999, -9999)`;
       }
-      const pageSize = this.ruleGroupList[this.currentPage - 1].length;
+      let pageSize;
+      try {
+        pageSize = this.ruleGroupList[this.currentPage - 1].length;
+      } catch (e) {
+        console.warn(this.ruleGroupList, 'c', this.currentPage);
+      }
       const contentHeight = topologyConfig.getClusterHeight(pageSize);
       const startHeight =
         (topologyConfig.getClusterHeight(this.rulePageSize) - contentHeight) /

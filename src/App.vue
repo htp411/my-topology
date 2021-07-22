@@ -32,6 +32,13 @@
             <el-radio label="hiddenRest">超出页面隐藏</el-radio>
           </el-radio-group>
         </el-form-item>
+        <el-form-item label="首节点规则数">
+          <el-input
+            v-model="form.firstClusterCount"
+            size="small"
+            type="number"
+          ></el-input>
+        </el-form-item>
         <el-form-item label="每页显示大小">
           <el-input
             v-model="form.pageSize"
@@ -75,7 +82,10 @@ export default {
     }
 
     if (topologyModelStr != null) {
-      form = JSON.parse(topologyModelStr);
+      form = Object.assign(
+        topologyConfig.defaultTopologyModel,
+        JSON.parse(topologyModelStr)
+      );
     }
 
     form.httpCodeBlockVisible = httpCodeBlockVisible;

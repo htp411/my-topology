@@ -1,3 +1,14 @@
+import topologyConfig from './topology';
+
+const topologyModelStr = window.localStorage.getItem('topologyModel');
+
+const firstClusterCount = +(topologyModelStr
+  ? Object.assign(
+      topologyConfig.defaultTopologyModel,
+      JSON.parse(topologyModelStr)
+    ).firstClusterCount
+  : topologyConfig.defaultTopologyModel.firstClusterCount);
+
 export default {
   nodes: [
     {
@@ -172,7 +183,7 @@ export default {
         'valleyTransRespTime',
         'bytesRate',
       ],
-      targetList: Array(10).fill({
+      targetList: Array(firstClusterCount).fill({
         id: 1948,
         lineId: 124,
         instanceId: 17,

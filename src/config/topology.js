@@ -3,12 +3,13 @@ const defaultTopologyModel = {
   model: 'pagination',
   pageSize: 4,
   expandFirstCluster: false,
+  firstClusterCount: 8,
 };
 
 export default {
   defaultTopologyModel,
   pageModel: topologyModelStr
-    ? JSON.parse(topologyModelStr)
+    ? Object.assign(defaultTopologyModel, JSON.parse(topologyModelStr))
     : defaultTopologyModel,
   padding: 50,
   blockWidth: 110,
@@ -26,7 +27,7 @@ export default {
   maxTopologyLength: 9,
   minTopologyLength: 2,
   clusterWidth: 580,
-  ellipseClusterWidth: 720,
+  ellipseClusterWidth: 620,
   shareLineEllipseClusterWidth: 1020,
   clusterHeight: 1800,
 

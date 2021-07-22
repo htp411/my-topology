@@ -29,12 +29,16 @@ export class DataParseUtil {
     const isShowAll = topologyModel === 'showAll';
     const ruleListLengthArray = line.map((l) => (l.targetList || []).length);
     const firstClusterRuleSize = ruleListLengthArray[0];
-    const maxRuleSize = d3.max(ruleListLengthArray);
+    let maxRuleSize = d3.max(ruleListLengthArray);
     const { needToShareLine, lineCount } = TopologyLayout.getShareLinesInfo(
       firstClusterRuleSize
     );
 
     let pageSize = topologyConfig.pageModel.pageSize;
+
+    if (needToShareLine && maxRuleSize === firstClusterRuleSize) {
+      maxRuleSize = d3.max(ruleListLengthArray.slice(1));
+    }
 
     if (isShowAll) {
       pageSize = maxRuleSize;

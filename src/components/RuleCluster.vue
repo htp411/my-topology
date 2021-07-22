@@ -5,6 +5,27 @@
     @mouseenter="showTopBarOperation"
     @mouseleave="hiddenTopBarOperation"
   >
+    <template v-if="ruleList.length === 0">
+      <rect
+        :width="cluster.width"
+        :height="cluster.height"
+        rx="5"
+        ry="5"
+        fill="none"
+        stroke-width="2"
+        style="stroke-dasharray: 10"
+        stroke="rgb(118, 168, 224)"
+      ></rect>
+      <foreignObject :height="cluster.height" :width="cluster.width">
+        <div class="foreign-object__root-item rule-list__no-data">
+          <span>未搜索到指定内容</span
+          ><el-button type="primary" @click="resetRuleFilter"
+            >重置搜索</el-button
+          >
+        </div>
+      </foreignObject>
+    </template>
+
     <rule-cluster-content
       v-for="(ruleGroup, index) of ruleGroupList"
       :key="index"
@@ -50,12 +71,28 @@
       <div class="foreign-object__root-item cluster__top-bar">
         <div
           class="cluster-operating__wrapper"
-          v-show="clusterOperatingVisible"
+          v-show="clusterOperatingVisible || ruleFilterInputVisible"
         >
           <i class="el-icon-tickets"></i>
           <i class="el-icon-document"></i>
           <i class="el-icon-s-tools"></i>
           <i class="el-icon-delete"></i>
+          <i
+            class="el-icon-search"
+            @click="ruleFilterInputVisible = !ruleFilterInputVisible"
+          ></i>
+          <template v-if="ruleFilterInputVisible">
+            <el-input
+              clearable
+              v-model="ruleFilterText"
+              style="margin-left: 40px"
+              placeholder="请输入规则名称、IP、或端口"
+              @clear="handleFilterRule"
+              @keyup.native.enter="handleFilterRule"
+            >
+            </el-input>
+            <el-button type="primary" @click="handleFilterRule">搜索</el-button>
+          </template>
         </div>
         <div class="cluster-index__wrapper" v-show="!clusterOperatingVisible">
           <i>{{ deviceIndex + 1 }}</i>
@@ -92,6 +129,7 @@ export default {
 
   data() {
     return {
+      ruleFilterText: '',
       currentPage: 1,
       rulePageSize:
         topologyConfig.pageModel.model === 'showAll'
@@ -100,6 +138,7 @@ export default {
       ruleList: [],
       hiddenTopBarTimeout: undefined,
       clusterOperatingVisible: false,
+      ruleFilterInputVisible: false,
     };
   },
 
@@ -155,7 +194,8 @@ export default {
     hiddenTopBarOperation() {
       this.hiddenTopBarTimeout = window.setTimeout(() => {
         this.clusterOperatingVisible = false;
-      }, 1500);
+        this.ruleFilterInputVisible = false;
+      }, 16880000);
     },
 
     handlePageChange(pageNo) {
@@ -163,12 +203,31 @@ export default {
     },
 
     getRuleList() {
-      return this.node.line.targetList
+      const ruleList = this.node.line.targetList
         .map((_) => ({
           ruleInfo: _,
           alarm: Math.floor(Math.random() * 30),
         }))
         .sort((a, b) => b.alarm - a.alarm);
+
+      if (this.ruleFilterText.trim()) {
+        const text = this.ruleFilterText;
+        return ruleList.filter((rule) => {
+          const {
+            ruleInfo: {
+              ruleInfo: { ipAddr = '', dstPort = '', ruleName = '' } = {},
+            } = {},
+          } = rule;
+
+          return (
+            ipAddr.includes(text) ||
+            dstPort.includes(text) ||
+            ruleName.includes(text)
+          );
+        });
+      }
+
+      return ruleList;
     },
 
     getPaginationTranslate() {
@@ -197,11 +256,21 @@ export default {
       const startHeight =
         (topologyConfig.getClusterHeight(this.rulePageSize) - contentHeight) /
         2;
-      return `translate(0, ${startHeight - this.cluster.topBarHeight})`;
+      return `translate(0, ${startHeight - this.cluster.topBarHeight - 10})`;
     },
 
     updateRuleListAlarm() {
       this.ruleList = this.getRuleList();
+    },
+
+    handleFilterRule() {
+      this.currentPage = 1;
+      this.updateRuleListAlarm();
+    },
+
+    resetRuleFilter() {
+      this.ruleFilterText = '';
+      this.updateRuleListAlarm();
     },
   },
 
@@ -213,17 +282,38 @@ export default {
     setInterval(() => {
       this.updateRuleListAlarm();
       this.currentPage = 1;
-    }, 3600 * 10);
+    }, 36000 * 10);
   },
 };
 </script>
 
 <style lang="scss">
+.rule-list__no-data {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
 .rule-cluster__content {
   animation: fade 0.3s;
 }
 .cluster__top-bar {
   position: relative;
+  .el-input__inner {
+    background-color: rgba(56, 68, 98, 1) !important;
+    border: 1px solid rgba(56, 68, 98, 1) !important;
+    border-radius: 4px 0 0 4px !important;
+    border-right-widthw: 0;
+    ::placeholder {
+      color: rgba(56, 68, 98, 0.5);
+    }
+    &::-webkit-input-placeholder {
+      /* WebKit browsers */
+      color: rgba(200, 200, 200, 0.5);
+    }
+  }
+  .el-button {
+    border-radius: 0 4px 4px 0;
+  }
 }
 .cluster-operating__wrapper,
 .cluster-index__wrapper {
@@ -257,7 +347,7 @@ export default {
   height: 100%;
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-end;
   color: #a0a0a0;
   strong {
     color: #dfdfdf;

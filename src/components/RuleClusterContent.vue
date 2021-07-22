@@ -1,6 +1,7 @@
 <template>
   <svg>
     <g :transform="transform.group">
+      <!-- 拓扑连线-->
       <path
         v-for="(line, index) of linkLines"
         :key="line.id"
@@ -10,6 +11,7 @@
         class="animation-line"
       ></path>
 
+      <!-- 连线上的动画-->
       <circle
         v-for="(line, index) of linkLines"
         :key="'animation' + index"
@@ -28,6 +30,7 @@
         </animateMotion>
       </circle>
 
+      <!-- 最外侧的边框-->
       <rect
         :width="content.width"
         :height="content.height"
@@ -39,6 +42,7 @@
         stroke="rgb(118, 168, 224)"
       ></rect>
 
+      <!-- 规则主体-->
       <circle
         v-for="(rule, index) of rules"
         :key="index"
@@ -47,13 +51,18 @@
         :transform="`translate(${rule.x},${rule.y})`"
       ></circle>
 
-      <circle
-        v-for="(p, i) in gatherPoints"
-        :key="'gather-point-' + i"
-        :r="8"
-        fill="rgba(127,127,127,1)"
-        :transform="`translate(${p.x},${p.y})`"
-      ></circle>
+      <!--      规则名称-->
+      <foreignObject
+        :height="content.ruleNameBlockHeight"
+        :width="content.ruleNameBlockWidth"
+        v-for="(rule, index) of ruleNameList"
+        :key="'rule-name-' + index"
+        :transform="`translate(${rule.x}, ${rule.y})`"
+      >
+        <span class="foreign-object__root-item rule-name">{{ rule.name }}</span>
+      </foreignObject>
+
+      <!--      规则里面现实的内容-->
       <text
         v-for="(rule, index) of rules"
         :key="'text-' + index"
@@ -62,6 +71,17 @@
       >
         {{ rule.ruleInfo.id }}/{{ rule.alarm }}
       </text>
+
+      <!--      左右两侧的连接点-->
+      <circle
+        v-for="(p, i) in gatherPoints"
+        :key="'gather-point-' + i"
+        :r="8"
+        fill="rgba(127,127,127,1)"
+        :transform="`translate(${p.x},${p.y})`"
+      ></circle>
+
+      <!--kpi的四方格-->
       <foreignObject
         :height="content.kpiTextBlockHeight"
         :width="content.kpiTextBlockWidth"
@@ -79,6 +99,7 @@
         </div>
       </foreignObject>
 
+      <!--      http返回码-->
       <template v-if="httpCodeBlockVisible">
         <foreignObject
           :height="content.httpCodeBlockHeight"
@@ -101,16 +122,6 @@
           </div>
         </foreignObject>
       </template>
-
-      <foreignObject
-        :height="content.ruleNameBlockHeight"
-        :width="content.ruleNameBlockWidth"
-        v-for="(rule, index) of ruleNameList"
-        :key="'rule-name-' + index"
-        :transform="`translate(${rule.x}, ${rule.y})`"
-      >
-        <span class="foreign-object__root-item rule-name">{{ rule.name }}</span>
-      </foreignObject>
     </g>
   </svg>
 </template>
@@ -175,6 +186,7 @@ export default {
         ruleNameBlockHeight: 36,
       };
     },
+
     ruleAxis() {
       return {
         x:
@@ -185,6 +197,7 @@ export default {
         clusterX: 150,
       };
     },
+
     transform() {
       return {
         group: `translate(${2},${
@@ -290,6 +303,7 @@ export default {
         })),
       }));
     },
+
     httpCOdeData() {
       return this.rules.map((rule) => ({
         x: rule.x - this.content.httpCodeBlockWidth / 2,
@@ -303,6 +317,7 @@ export default {
         })),
       }));
     },
+
     ruleNameList() {
       return this.rules.map((d) => ({
         x: d.x - this.content.ruleNameBlockWidth / 2,

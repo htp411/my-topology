@@ -1,6 +1,7 @@
 <template>
   <g :transform="transform.cluster">
     <svg :width="cluster.width" :height="cluster.height">
+      <!--      拓扑连线-->
       <path
         v-for="(line, index) of linkLines"
         :key="line.id"
@@ -10,6 +11,7 @@
         class="animation-line"
       ></path>
 
+      <!--      连线上的动画-->
       <circle
         v-for="(line, index) of linkLines"
         :key="'animation' + index"
@@ -28,6 +30,7 @@
         </animateMotion>
       </circle>
 
+      <!--      外边框-->
       <rect
         v-if="false"
         :width="cluster.width"
@@ -40,6 +43,7 @@
         stroke="rgb(118, 168, 224)"
       ></rect>
 
+      <!--      规则主体-->
       <circle
         v-for="(rule, index) of rules"
         :key="index"
@@ -47,7 +51,72 @@
         fill="#227D51"
         :transform="`translate(${rule.x},${rule.y})`"
       ></circle>
+
+      <!--    规则里面显示的内容-->
+      <text
+        v-for="(rule, index) of rules"
+        :key="'text-' + index"
+        fill="#fff"
+        :transform="`translate(${rule.x - 25},${rule.y})`"
+      >
+        {{ rule.id }}/{{ rule.alarm }}
+      </text>
+
+      <!--      规则名称-->
+      <foreignObject
+        :height="cluster.ruleNameBlockHeight"
+        :width="cluster.ruleNameBlockWidth"
+        v-for="(rule, index) of ruleNameList"
+        :key="'rule-name-' + index"
+        :transform="`translate(${rule.x}, ${rule.y})`"
+      >
+        <span class="foreign-object__root-item rule-name">{{ rule.name }}</span>
+      </foreignObject>
+
+      <!--      KPI四方格-->
+      <foreignObject
+        :height="cluster.kpiTextBlockHeight"
+        :width="cluster.kpiTextBlockWidth"
+        v-for="(ruleKpi, index) in kpiData"
+        :key="'rule-kpi' + index"
+        :transform="`translate(${ruleKpi.x}, ${ruleKpi.y})`"
+      >
+        <div class="foreign-object__root-item kpi-wrapper">
+          <span
+            v-for="kpi in ruleKpi.kpiInfo"
+            :key="kpi.key"
+            :class="['kpi', { 'kpi-hidden': !kpi.key }]"
+            >{{ kpi.key ? `${kpi.key}: ${kpi.value}` : '请绑定KPI' }}</span
+          >
+        </div>
+      </foreignObject>
+
+      <!--      HTTP返回码-->
+      <template v-if="httpCodeBlockVisible">
+        <foreignObject
+          :height="cluster.httpCodeBlockHeight"
+          :width="cluster.httpCodeBlockWidth"
+          v-for="(httpCode, index) in httpCOdeData"
+          :key="'http-code' + index"
+          :transform="`translate(${httpCode.x},${httpCode.y})`"
+        >
+          <div class="foreign-object__root-item">
+            <ul class="http-code__list">
+              <li
+                v-for="(code, index) in httpCode.httpCodeInfo"
+                :key="'http-code-key' + index"
+                class="http-code__item"
+              >
+                <span>{{ code.key }}数量: {{ code.value.baseline }}</span>
+                <span>上周同期: {{ code.value.lastWeek }}</span>
+              </li>
+            </ul>
+          </div>
+        </foreignObject>
+      </template>
     </svg>
+
+    <!--    连接线-->
     <circle
       v-for="(p, i) in gatherPoints"
       :key="'gather-point-' + i"
@@ -55,6 +124,8 @@
       fill="rgba(127,127,127,1)"
       :transform="`translate(${p.x - 20},${p.y})`"
     ></circle>
+
+    <!--    连接线上的序号-->
     <text
       fill="#fff"
       style="font-size: 20px"
@@ -63,65 +134,6 @@
       })`"
       >1</text
     >
-
-    <text
-      v-for="(rule, index) of rules"
-      :key="'text-' + index"
-      fill="#fff"
-      :transform="`translate(${rule.x - 25},${rule.y})`"
-    >
-      {{ rule.id }}/{{ rule.alarm }}
-    </text>
-
-    <foreignObject
-      :height="cluster.kpiTextBlockHeight"
-      :width="cluster.kpiTextBlockWidth"
-      v-for="(ruleKpi, index) in kpiData"
-      :key="'rule-kpi' + index"
-      :transform="`translate(${ruleKpi.x}, ${ruleKpi.y})`"
-    >
-      <div class="foreign-object__root-item kpi-wrapper">
-        <span
-          v-for="kpi in ruleKpi.kpiInfo"
-          :key="kpi.key"
-          :class="['kpi', { 'kpi-hidden': !kpi.key }]"
-          >{{ kpi.key ? `${kpi.key}: ${kpi.value}` : '请绑定KPI' }}</span
-        >
-      </div>
-    </foreignObject>
-
-    <template v-if="httpCodeBlockVisible">
-      <foreignObject
-        :height="cluster.httpCodeBlockHeight"
-        :width="cluster.httpCodeBlockWidth"
-        v-for="(httpCode, index) in httpCOdeData"
-        :key="'http-code' + index"
-        :transform="`translate(${httpCode.x},${httpCode.y})`"
-      >
-        <div class="foreign-object__root-item">
-          <ul class="http-code__list">
-            <li
-              v-for="(code, index) in httpCode.httpCodeInfo"
-              :key="'http-code-key' + index"
-              class="http-code__item"
-            >
-              <span>{{ code.key }}数量: {{ code.value.baseline }}</span>
-              <span>上周同期: {{ code.value.lastWeek }}</span>
-            </li>
-          </ul>
-        </div>
-      </foreignObject>
-    </template>
-
-    <foreignObject
-      :height="cluster.ruleNameBlockHeight"
-      :width="cluster.ruleNameBlockWidth"
-      v-for="(rule, index) of ruleNameList"
-      :key="'rule-name-' + index"
-      :transform="`translate(${rule.x}, ${rule.y})`"
-    >
-      <span class="foreign-object__root-item rule-name">{{ rule.name }}</span>
-    </foreignObject>
   </g>
 </template>
 
@@ -180,7 +192,7 @@ export default {
         topBarHeight: 36,
         kpiTextBlockWidth: 200,
         kpiTextBlockHeight: 150,
-        kpiTextBlockX: this.httpCodeBlockVisible ? 198 : 168,
+        kpiTextBlockX: this.httpCodeBlockVisible ? 250 : 228,
         clusterKpiTextBlockX: 288,
         httpCodeBlockHeight: 72,
         httpCodeBlockWidth: 220,
@@ -193,7 +205,7 @@ export default {
     ruleAxis() {
       return {
         x: 50,
-        clusterX: 66,
+        clusterX: 120,
       };
     },
 
@@ -267,7 +279,6 @@ export default {
       );
 
       const linkLines = this.rules.map((d) => {
-        console.log(this.httpCodeBlockVisible);
         return {
           id: Math.random(),
           points: [

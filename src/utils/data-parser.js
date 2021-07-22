@@ -36,8 +36,12 @@ export class DataParseUtil {
 
     let pageSize = topologyConfig.pageModel.pageSize;
 
-    if (needToShareLine && maxRuleSize === firstClusterRuleSize) {
-      maxRuleSize = d3.max(ruleListLengthArray.slice(1));
+    if (
+      isExpandFirstCluster &&
+      needToShareLine &&
+      maxRuleSize === firstClusterRuleSize
+    ) {
+      maxRuleSize = d3.max([lineCount, d3.max(ruleListLengthArray.slice(1))]);
     }
 
     if (isShowAll) {
@@ -54,7 +58,10 @@ export class DataParseUtil {
       }
 
       const l = line[index - 1] ? line[index - 1] : {};
-      const isCluster = (l.targetList || []).length > 1;
+      const isCluster =
+        (index === 1 && (l.targetList || []).length >= 1) ||
+        (l.targetList || []).length > 1;
+
       const isEllipseCluster = index === 1 && isExpandFirstCluster;
 
       resultData.push({

@@ -55,7 +55,6 @@ export default {
 
   mounted() {
     this.drawLine();
-    console.log(233);
   },
 
   methods: {

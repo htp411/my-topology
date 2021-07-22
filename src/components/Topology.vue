@@ -133,7 +133,6 @@ export default {
     },
 
     getNodeAndLines() {
-      console.log(DataParseUtil);
       const { resultData: data, maxRuleSize } = DataParseUtil.topology(
         topologyData
       );

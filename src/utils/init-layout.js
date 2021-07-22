@@ -69,7 +69,7 @@ export class TopologyLayout {
       res.deviceOrRuleId = src.id;
       return res;
     });
-    // console.log({ nodes, edges, dagre });
+
     return { nodes, edges, dagre };
   }
 
